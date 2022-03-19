@@ -1,28 +1,18 @@
-import { Command, Option } from 'commander';
-import { newDb } from './db';
-import { newPgInfo } from 'pginfo';
+import dotenv from 'dotenv';
+import { PgInfoService } from 'pgsqlinfo';
+import { makeCommand } from './cmd';
+import { writeSchemaFile } from './files';
 import { PgDtoGenerator } from './PgDtoGenerator';
 
+dotenv.config();
 main();
 
 async function main() {
-  const program = new Command();
-  const dbHostOption = (new Option('-h, --host <host>', 'enter host or set PGHOST')).env('PGHOST').defaultValue('localhost');
-  const dbPortOption = (new Option('-p, --port <port>', 'enter port or set PGPORT')).env('PGPORT').defaultValue('5432');
-  const dbUserOption = (new Option('-u, --user <user>', 'enter username or set PGUSER')).env('PGUSER');
-  const dbPassOption = (new Option('-P, --password <password>', 'enter password or set PGPASSWORD')).env('PGPASSWORD');
-  const dbNameOption  = (new Option('-d, --name <database>', 'enter database name or set PGDATABASE')).env('PGDATABASE');
-  program
-    .version('1.0.0', '-v, --version', 'output the current version')
-    .option('--debug', 'turn on debugging')
-    .addOption(dbHostOption)
-    .addOption(dbPortOption)
-    .addOption(dbUserOption)
-    .addOption(dbPassOption)
-    .addOption(dbNameOption)
-  ;
-  program.parse(process.argv);
-  const options = program.opts();
+  const cmd = makeCommand();
+
+  cmd.parse(process.argv);
+  const options = cmd.opts();
+
   const dbOptions = {
     host: options.host,
     port: options.port,
@@ -30,9 +20,19 @@ async function main() {
     password: options.password,
     database: options.database,
   };
-  const db = newDb(dbOptions);
-  const dbInfo = newPgInfo(db, dbOptions.database);
+
+  const outDir = options.outdir;
+
+  const dbInfo = new PgInfoService(dbOptions, dbOptions.database);
+  // const one = await dbInfo.query('SELECT 1 AS one');
+
   const generator = new PgDtoGenerator(dbInfo);
-  const results = await generator.generate();
-  console.info(results);
+
+  console.info('begin!');
+  const schemaOutputList = await generator.generate();
+  for (const schemaOutput of schemaOutputList) {
+    writeSchemaFile(outDir, schemaOutput.schemaName, schemaOutput.content);
+  }
+  console.info('the end!');
+  process.exit(0);
 }

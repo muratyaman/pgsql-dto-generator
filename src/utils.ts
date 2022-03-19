@@ -1,4 +1,4 @@
-import { PgColumn, PgDataTypeEnum, PgUdtNameEnum } from 'pginfo';
+import { PgColumn, PgDataTypeEnum, PgUdtNameEnum } from 'pgsqlinfo';
 
 const numberDataTypes: PgDataTypeEnum[] = [
   PgDataTypeEnum.bigint,
@@ -12,16 +12,18 @@ const numberDataTypes: PgDataTypeEnum[] = [
 const numberUdtNames: PgUdtNameEnum[] = [
   PgUdtNameEnum._int2,
   PgUdtNameEnum.int2,
+  PgUdtNameEnum._int4,
   PgUdtNameEnum.int4,
   PgUdtNameEnum.int8,
   PgUdtNameEnum.float4,
   PgUdtNameEnum.float8,
   PgUdtNameEnum._float4,
   PgUdtNameEnum._float8,
+  PgUdtNameEnum.money,
   PgUdtNameEnum.numeric,
 ];
 
-const objDataTypes: PgDataTypeEnum[] = [
+const jsonDataTypes: PgDataTypeEnum[] = [
   PgDataTypeEnum.json,
   PgDataTypeEnum.jsonb,
 ];
@@ -31,15 +33,28 @@ const dateDataTypes: PgDataTypeEnum[] = [
   PgDataTypeEnum.timestamp_without_time_zone,
 ];
 
+const stringUdtNames: PgUdtNameEnum[] = [
+  PgUdtNameEnum._char,
+  PgUdtNameEnum._name,
+  PgUdtNameEnum._varchar,
+  PgUdtNameEnum._text,
+];
+
 const stringDataTypes: PgDataTypeEnum[] = [
   PgDataTypeEnum.character_varying,
   PgDataTypeEnum.char,
+  PgDataTypeEnum.name,
   PgDataTypeEnum.text,
+  PgDataTypeEnum.time_with_time_zone,
+  PgDataTypeEnum.time_without_time_zone,
   PgDataTypeEnum.uuid,
 ];
 
 export function getTsType(c: PgColumn): string {
   let tsType = 'any';
+  
+  // it can be [], or [][], etc. TODO: array dimensions
+  let array = c.data_type === 'ARRAY' ? '[]' : '';
 
   do {
     if (numberUdtNames.includes(c.udt_name as PgUdtNameEnum)) {
@@ -51,13 +66,19 @@ export function getTsType(c: PgColumn): string {
     if (dateDataTypes.includes(c.data_type as PgDataTypeEnum)) {
       tsType = 'Date'; break;
     }
-    if (objDataTypes.includes(c.data_type as PgDataTypeEnum)) {
-      tsType = 'Record<string, any>'; break;
+    if (jsonDataTypes.includes(c.data_type as PgDataTypeEnum)) {
+      tsType = 'JsonType'; break;
+    }
+    if (stringUdtNames.includes(c.udt_name as PgUdtNameEnum)) {
+      tsType = 'string'; break;
     }
     if (stringDataTypes.includes(c.data_type as PgDataTypeEnum)) {
       tsType = 'string'; break;
     }
+    if (c.data_type === 'boolean') {
+      tsType = 'boolean'; break;
+    }
   } while(false); // run once
 
-  return tsType;
+  return `${tsType}${array}`;
 }
