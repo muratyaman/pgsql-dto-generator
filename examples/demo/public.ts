@@ -82,7 +82,7 @@ export interface optionsDtoWritable {
    * Type: ARRAY; UDT: pg_catalog._int4
    * Default value: null
    */
-  int_arr_dim2: number[];
+  int_arr_dim2: number[][];
 
   /**
    * Type: integer; UDT: pg_catalog.int4

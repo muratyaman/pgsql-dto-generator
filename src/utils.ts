@@ -50,11 +50,16 @@ const stringDataTypes: PgDataTypeEnum[] = [
   PgDataTypeEnum.uuid,
 ];
 
+const arrayDataTypes: PgDataTypeEnum[] = [
+  PgDataTypeEnum.anyarray,
+  PgDataTypeEnum.ARRAY,
+];
+
 export function getTsType(c: PgColumn): string {
   let tsType = 'any';
-  
+
   // it can be [], or [][], etc. TODO: array dimensions
-  let array = c.data_type === 'ARRAY' ? '[]' : '';
+  let array = arrayDataTypes.includes(c.data_type as PgDataTypeEnum) ? '[]'.repeat(c.array_dimension ?? 0) : '';
 
   do {
     if (numberUdtNames.includes(c.udt_name as PgUdtNameEnum)) {
