@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { Pool, PoolConfig } from 'pg';
 import { PgInfoService } from 'pgsqlinfo';
 import { makeCommand } from './cmd';
-import { writeSchemaFileSync } from './files';
+import { writeSchemaFile } from './files';
 import { PgDtoGenerator } from './PgDtoGenerator';
 
 dotenv.config();
@@ -40,7 +40,7 @@ async function main() {
 
       const schemaOutputList = await generator.generate();
       for (const schemaOutput of schemaOutputList) {
-        writeSchemaFileSync(outDir, schemaOutput.schemaName, schemaOutput.content);
+        await writeSchemaFile(outDir, schemaOutput.schemaName, schemaOutput.content);
       }
     } catch (err) {
       exitCode = -1;
